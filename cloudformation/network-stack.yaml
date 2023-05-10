@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVPC
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1b
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: MyEksCluster
+      Version: '1.26'
+      RoleArn: arn:aws:iam::757285457443:role/myAmazonEKSClusterRole
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref ClusterSecurityGroup
+        SubnetIds:
+          - !Ref PublicSubnet
+          - !Ref PrivateSubnet
+  ClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EKS Cluster Security Group
+      VpcId: !Ref VPC
+  NodeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EKS Node Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  PrivateNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodegroupName: MyNodeGroup
+      NodeRole: arn:aws:iam::757285457443:role/myAWMEKSNodeRole
+      Subnets:
+        - !Ref PrivateSubnet
+      ScalingConfig:
+        DesiredSize: 1
+        MinSize: 1
+        MaxSize: 1
+      InstanceTypes:
+        - t3.medium
+      Tags:
+        Name : 'MyPrivateNodeGroup'
+        Subnet: 'private'
+  PublicNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodeRole:  arn:aws:iam::757285457443:role/myAWMEKSNodeRole 
+      Subnets:
+        - !Ref PublicSubnet
+      ScalingConfig:
+        DesiredSize: 1
+        MinSize: 1
+        MaxSize: 1
+      InstanceTypes:
+        - t3.medium
+      Tags:
+        Name: 'MyPublicNodeGroup'
+        Subnet: 'public'
+
+  AuroraDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Aurora DB
+      SubnetIds:
+        - !Ref PrivateSubnet
+        - !Ref PublicSubnet
+ 
+  DBSecurityGroup:
+    Type: AWS::RDS::DBSecurityGroup
+    Properties:
+      GroupDescription: Allow access to Aurora DB
+      DBSecurityGroupIngress:
+        - EC2SecurityGroupName: !Ref EC2SecurityGroup
+      VpcId: !Ref VPC
+
+  AuroraDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      DBInstanceIdentifier: MyAuroraDBInstance
+      DBSubnetGroupName: !Ref AuroraDBSubnetGroup
+      DBInstanceClass: db.t3.micro
+      PubliclyAccessible: false
+      AvailabilityZone: us-east-1a
+      MultiAZ: false
+      MasterUsername: postgres
+      MasterUserPassword: admin123
+      AllocatedStorage: 20
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+
+Outputs:
+  EC2InstancePublicIP:
+    Value: !GetAtt EC2Instance.PublicIp
