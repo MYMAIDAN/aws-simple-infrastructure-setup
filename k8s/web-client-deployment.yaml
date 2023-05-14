@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-client
+  labels:
+    app: web-client 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-client 
+  template:
+    metadata:
+      labels:
+        app: web-client
+    spec:
+      containers:
+      - name: web-client 
+        image: public.ecr.aws/r1x6s6y8/web-client:latest
+        ports:
+        - containerPort: 80

@@ -6,13 +6,11 @@
         // Function to make the REST call
         function makeRestCall() {
             // Create a new XMLHttpRequest object
+            console.log(API_URL);
             var xhr = new XMLHttpRequest();
-
+            xhr.open('GET', API_URL, true);
             // Define the endpoint URL
-            var url = 'https://api.example.com/data';
 
-            // Set the HTTP method and endpoint URL
-            xhr.open('GET', url, true);
 
             // Set the callback function to handle the response
             xhr.onload = function () {
@@ -33,6 +31,7 @@
     </script>
 </head>
 <body>
+    <!--#echo var="API_URL" -->
     <h1>Simple HTML Page with REST Call</h1>
     <button onclick="makeRestCall()">Make REST Call</button>
     <div id="output"></div>
