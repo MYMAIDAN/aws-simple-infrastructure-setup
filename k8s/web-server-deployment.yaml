@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: web-server
+  labels:
+    app: web-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      contaniners:
+      - name: web-server
+        image: public.ecr.aws/r1x6s6y8/web-server:latest
+        ports:
+        - containerPort: 3000
+

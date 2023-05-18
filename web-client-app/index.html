@@ -6,9 +6,9 @@
         // Function to make the REST call
         function makeRestCall() {
             // Create a new XMLHttpRequest object
-            console.log(API_URL);
+            console.log("0.0.0.0:3000/simple_call");
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', API_URL, true);
+            xhr.open('GET', 'http://web-server:3000/simple_call', true);
             // Define the endpoint URL
 
 
