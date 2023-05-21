@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-server
@@ -14,7 +14,7 @@ spec:
       labels:
         app: web-server
     spec:
-      contaniners:
+      containers:
       - name: web-server
         image: public.ecr.aws/r1x6s6y8/web-server:latest
         ports:

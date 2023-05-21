@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn simple_call_handler() -> axum::response::Html<&'static str>{
+async fn simple_call_handler() -> axum::Json<Vec<String>> {
     println!("Hello World! call");
-    axum::response::Html("<h1>Hello World!</h1>")
+    axum::Json(vec!["foo".to_owned(),"bar".to_owned()])
 }

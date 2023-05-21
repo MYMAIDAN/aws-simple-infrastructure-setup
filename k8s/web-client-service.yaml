@@ -2,12 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: web-client
-  labels:
-    run: web-client
 spec:
-  ports:
-  - port: 80
-    targetPort: 800
-    protocol: TCP
   selector:
-    run: web-client
+    app: web-client
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30000  # Specify the desired node ports
+  type: NodePort
