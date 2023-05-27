@@ -75,6 +75,17 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
   EKSCluster:
     Type: AWS::EKS::Cluster
     Properties:
@@ -107,7 +118,7 @@ Resources:
     Properties:
       ClusterName: !Ref EKSCluster
       NodegroupName: MyNodeGroup
-      NodeRole: arn:aws:iam::757285457443:role/myAWMEKSNodeRole
+      NodeRole: arn:aws:iam::757285457443:role/myAmazonEKSNodeRole
       Subnets:
         - !Ref PrivateSubnet
       ScalingConfig:
@@ -123,7 +134,7 @@ Resources:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EKSCluster
-      NodeRole:  arn:aws:iam::757285457443:role/myAWMEKSNodeRole 
+      NodeRole:  arn:aws:iam::757285457443:role/myAmazonEKSNodeRole
       Subnets:
         - !Ref PublicSubnet
       ScalingConfig:
@@ -143,14 +154,17 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnet
         - !Ref PublicSubnet
- 
+
   DBSecurityGroup:
-    Type: AWS::RDS::DBSecurityGroup
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow access to Aurora DB
-      DBSecurityGroupIngress:
-        - EC2SecurityGroupName: !Ref EC2SecurityGroup
+      GroupDescription: RDS security group
       VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 3306
+          ToPort: 3306
+          IpProtocol: tcp
 
   AuroraDBInstance:
     Type: AWS::RDS::DBInstance
@@ -159,7 +173,7 @@ Resources:
       DBInstanceIdentifier: MyAuroraDBInstance
       DBSubnetGroupName: !Ref AuroraDBSubnetGroup
       DBInstanceClass: db.t3.micro
-      PubliclyAccessible: false
+      PubliclyAccessible: true
       AvailabilityZone: us-east-1a
       MultiAZ: false
       MasterUsername: postgres
@@ -168,6 +182,6 @@ Resources:
       VPCSecurityGroups:
         - !Ref DBSecurityGroup
 
-Outputs:
-  EC2InstancePublicIP:
-    Value: !GetAtt EC2Instance.PublicIp
+# Outputs:
+#   EC2InstancePublicIP:
+#     Value: !GetAtt EC2Instance.PublicIp
