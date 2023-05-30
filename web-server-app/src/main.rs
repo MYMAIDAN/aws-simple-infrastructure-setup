@@ -1,13 +1,15 @@
 #![allow(clippy::result_large_err)]
+use std::format;
 use std::io::Chain;
 
 mod database;
 use axum::routing::get;
 use axum::Router;
 
-use aws_config::meta::region::RegionProviderChain;
-use aws_sdk_rdsdata::{config::Region, meta::PKG_VERSION, Client, Error};
+use aws_sdk_secretsmanager::Client;
+
 use clap::Parser;
+mod secret_manager;
 
 #[derive(Debug,Parser)]
 struct Opt{
@@ -27,24 +29,23 @@ struct Opt{
     verbose: bool
 }
 
-async fn query_cluster( client: &Client,
-                        cluster_arn: &str,
-                        query: &str,
-                        secret_arn: &str
-                        ) -> Result<(), Error>{
-    let st = client.execute_sql()
-        .db_cluster_or_instance_arn(cluster_arn)
-        .database("postgres")
-        .sql_statements(query)
-        .aws_secret_store_arn("arn:aws:secretsmanager:us-east-1:757285457443:secret:rds!db-6f7ef3a1-a2e3-497f-a58e-5f2c9a34249a-ccLMOb");
-
-    let result = st.send().await?;
-
-    println!("Result:{:?}", result);
-
-    Ok(())
-
-}
+// async fn query_cluster( client: &Client,
+//                         cluster_arn: &str,
+//                         query: &str,
+//                         secret_arn: &str
+//                         ) -> Result<(), Error>{
+//     let st = client.execute_sql()
+//         .db_cluster_or_instance_arn(cluster_arn)
+//         .database("postgres")
+//         .sql_statements(query)
+//         .aws_secret_store_arn("arn:aws:secretsmanager:us-east-1:757285457443:secret:rds!db-6f7ef3a1-a2e3-497f-a58e-5f2c9a34249a-ccLMOb");
+//
+//     let result = st.send().await?;
+//
+//     println!("Result:{:?}", result);
+//
+//     Ok(())
+//
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -57,7 +58,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //                                                                           .or_else(Region::new("us-east-1"));
 // vj
 
-    let connection = crate::database::connection::establish_connection();
 
     println!();
 
@@ -79,6 +79,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //
     // query_cluster(&client, &cluster_arn, &query, &secret_arn).await;
     //
+    let shared_config = aws_config::from_env().load().await;
+    let client = Client::new(&shared_config);
+
+    let cred = secret_manager::get_secret_value(&client,"rds!db-ff7ad625-f456-4c85-84e2-78fbcb247c81").await?;
+    let url = format!("postgres://{}:{}@myauroradbinstance.cur5knkivca0.us-east-1.rds.amazonaws.com/",
+                      cred.username,cred.password);
+
+    let connection = crate::database::connection::establish_connection(&url);
+
     let cors = tower_http::cors::CorsLayer::permissive();
     let app  = Router::new()
     .route("/simple_call",get(simple_call_handler))

@@ -179,6 +179,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-secretsmanager"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cf5bca93576963ad7e551387fe3a93c139a74b16b58d71c3d1347321e2458ad"
+dependencies = [
+ "aws-credential-types",
+ "aws-endpoint",
+ "aws-http",
+ "aws-sig-auth",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-http-tower",
+ "aws-smithy-json",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand",
+ "http",
+ "regex",
+ "tokio-stream",
+ "tower",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-sso"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1333,9 +1359,23 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.162"
+version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71b2f6e1ab5c2b98c05f0f35b236b22e8df7ead6ffbf51d7808da7f8817e7ab6"
+checksum = "2113ab51b87a539ae008b5c6c02dc020ffa39afd2d83cffcb3f4eb2722cebec2"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.163"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c805777e3930c8883389c602315a24224bcc738b63905ef87cd1420353ea93e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.15",
+]
 
 [[package]]
 name = "serde_json"
@@ -1812,11 +1852,14 @@ version = "0.1.0"
 dependencies = [
  "aws-config",
  "aws-sdk-rdsdata",
+ "aws-sdk-secretsmanager",
  "axum",
  "clap",
  "diesel",
  "dotenvy",
  "http",
+ "serde",
+ "serde_json",
  "tokio",
  "tower",
  "tower-http",

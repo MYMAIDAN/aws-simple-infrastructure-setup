@@ -6,15 +6,15 @@
 # - https://medium.com/@danieltse/pull-the-docker-image-from-aws-ecr-in-kubernetes-dc7280d74904
 
 EKS_CLUSTER_NAME=my-cluster
-EKS_ROLE_NAME=myAmazonEKSClusterRole
-EKS_NODE_ROLE_NAME=myAmazonEKSNodeRole
+EKS_ROLE_NAME=myAmazonEKSClusterRole1
+EKS_NODE_ROLE_NAME=myAmazonEKSNodeRole1
 # Create VPC by using CloudFormation
 
 ## Validate Network Template
-aws cloudformation validate-template --template-body file://network-stack.json
+aws cloudformation validate-template --template-body file://stack-template.yaml
 
 ## Deploy Template
-aws cloudformation deploy --template-file "network-stack.json" --stack-name "simple-web-app-stack"
+aws cloudformation deploy --template-file "stack-template.yaml" --stack-name "simple-web-app-stack"
 
 # Create Role for ESK Cluster
 aws iam create-role \
